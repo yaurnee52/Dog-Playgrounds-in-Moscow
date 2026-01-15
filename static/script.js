@@ -1,9 +1,18 @@
-const map = L.map("map").setView([55.75, 37.62], 11);
+let map = null;
 
-L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-  maxZoom: 19,
-  attribution: "&copy; OpenStreetMap contributors",
-}).addTo(map);
+function initMap() {
+  if (typeof DG === "undefined") {
+    alert("Не удалось загрузить карту 2ГИС. Проверьте API ключ.");
+    return;
+  }
+  DG.then(() => {
+    map = DG.map("map", {
+      center: [55.75, 37.62],
+      zoom: 11,
+    });
+    loadPlaygrounds();
+  });
+}
 
 const modalElement = document.getElementById("playgroundModal");
 const modal = new bootstrap.Modal(modalElement);
@@ -32,17 +41,16 @@ async function loadPlaygrounds() {
     alert("Не удалось загрузить площадки.");
     return;
   }
-  const bounds = L.latLngBounds([]);
+  const bounds = [];
   response.data.forEach((playground) => {
     if (playground.lat && playground.lon) {
-      const marker = L.marker([playground.lat, playground.lon])
-        .addTo(map)
-        .on("click", () => openPlayground(playground.id));
-      bounds.extend(marker.getLatLng());
+      const marker = DG.marker([playground.lat, playground.lon]).addTo(map);
+      marker.on("click", () => openPlayground(playground.id));
+      bounds.push([playground.lat, playground.lon]);
     }
   });
-  if (bounds.isValid()) {
-    map.fitBounds(bounds.pad(0.15));
+  if (bounds.length) {
+    map.fitBounds(bounds, { padding: [30, 30] });
   }
 }
 
@@ -160,4 +168,4 @@ dogSelect.addEventListener("change", () => {
   loadDetails();
 });
 
-loadPlaygrounds();
+initMap();
