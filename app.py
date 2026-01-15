@@ -466,10 +466,10 @@ def register_user():
 @app.route("/api/login", methods=["POST"])
 def login_user():
     payload = request.get_json(silent=True) or {}
-    email = (payload.get("email") or "").strip().lower()
+    username = (payload.get("username") or "").strip()
     password = payload.get("password") or ""
 
-    if not email or not password:
+    if not username or not password:
         return jsonify({"error": "Missing credentials"}), 400
 
     with get_db() as conn:
@@ -478,16 +478,16 @@ def login_user():
                 """
                 SELECT id, username, password_hash
                 FROM users
-                WHERE email = %s
+                WHERE username = %s
                 """,
-                (email,),
+                (username,),
             )
             user_row = cur.fetchone()
 
     if not user_row or not check_password_hash(
         user_row["password_hash"], password
     ):
-        return jsonify({"error": "Invalid email or password"}), 401
+        return jsonify({"error": "Invalid username or password"}), 401
 
     return jsonify({"success": True, "user_id": user_row["id"], "username": user_row["username"]})
 

@@ -36,7 +36,7 @@
             <p class="text-muted">
               Подберите площадку по району, проверьте совместимость собак и
               запишитесь на удобный час. Мы учитываем категорию породы и лимит
-              по количеству собак в слоте.
+              по количеству собак.
             </p>
             <div class="d-flex flex-wrap gap-2">
               <a class="btn btn-primary" href="#search">Найти площадки</a>
@@ -112,8 +112,8 @@
 
             <form id="loginForm" class="row g-3">
               <div class="col-md-6">
-                <label class="form-label">Email</label>
-                <input class="form-control" name="email" type="email" required />
+                <label class="form-label">Логин</label>
+                <input class="form-control" name="username" required />
               </div>
               <div class="col-md-6">
                 <label class="form-label">Пароль</label>
@@ -126,13 +126,6 @@
               </div>
               <div class="col-12 d-flex align-items-center justify-content-between">
                 <button class="btn btn-primary" type="submit">Войти</button>
-                <button
-                  class="btn btn-link"
-                  type="button"
-                  id="showRegisterBtn"
-                >
-                  Нет аккаунта? Регистрация
-                </button>
               </div>
             </form>
 
@@ -175,11 +168,20 @@
                 <button class="btn btn-success" type="submit">
                   Зарегистрироваться
                 </button>
-                <button class="btn btn-link" type="button" id="showLoginBtn">
-                  Уже есть аккаунт? Войти
-                </button>
               </div>
             </form>
+          </div>
+          <div class="modal-footer">
+            <button
+              class="btn btn-link"
+              type="button"
+              id="showRegisterBtn"
+            >
+              Нет аккаунта? Регистрация
+            </button>
+            <button class="btn btn-link d-none" type="button" id="showLoginBtn">
+              Уже есть аккаунт? Войти
+            </button>
           </div>
         </div>
       </div>

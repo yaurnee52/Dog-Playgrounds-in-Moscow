@@ -127,12 +127,16 @@ function showLoginForm() {
   authTitle.textContent = "Авторизация";
   loginForm.classList.remove("d-none");
   registerForm.classList.add("d-none");
+  showRegisterBtn.classList.remove("d-none");
+  showLoginBtn.classList.add("d-none");
 }
 
 function showRegisterForm() {
   authTitle.textContent = "Регистрация";
   registerForm.classList.remove("d-none");
   loginForm.classList.add("d-none");
+  showRegisterBtn.classList.add("d-none");
+  showLoginBtn.classList.remove("d-none");
 }
 
 showRegisterBtn.addEventListener("click", showRegisterForm);
