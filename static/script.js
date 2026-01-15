@@ -24,6 +24,16 @@ const photoEl = document.getElementById("modalPhoto");
 const slotsContainer = document.getElementById("slotsContainer");
 const categorySelect = document.getElementById("categorySelect");
 const dogSelect = document.getElementById("dogSelect");
+const authModalElement = document.getElementById("authModal");
+const authModalDialog = document.querySelector("#authModal .modal-dialog");
+const loginForm = document.getElementById("loginForm");
+const registerForm = document.getElementById("registerForm");
+const authStatus = document.getElementById("authStatus");
+const authTitle = document.getElementById("authTitle");
+const showRegisterBtn = document.getElementById("showRegisterBtn");
+const showLoginBtn = document.getElementById("showLoginBtn");
+const profileLink = document.getElementById("profileLink");
+const authButtons = document.querySelectorAll("[data-auth-button]");
 
 let currentPlaygroundId = null;
 let dogsCache = [];
@@ -51,6 +61,60 @@ async function loadPlaygrounds() {
   });
   if (bounds.length) {
     map.fitBounds(bounds, { padding: [30, 30] });
+  }
+}
+
+async function loadDistricts() {
+  const select = document.getElementById("mapDistrictSelect");
+  if (!select) {
+    return;
+  }
+  try {
+    const response = await axios.get("/api/districts");
+    const districts = response.data || [];
+    select.innerHTML = "";
+    districts.forEach((district) => {
+      const option = document.createElement("option");
+      option.value = district;
+      option.textContent = district;
+      select.appendChild(option);
+    });
+    const urlParams = new URLSearchParams(window.location.search);
+    const currentDistrict = urlParams.get("district");
+    if (currentDistrict) {
+      select.value = currentDistrict;
+    }
+  } catch (error) {
+    select.innerHTML = "<option>Ошибка загрузки</option>";
+  }
+}
+
+function bindDistrictFilter() {
+  const select = document.getElementById("mapDistrictSelect");
+  const applyBtn = document.getElementById("mapDistrictApply");
+  if (!select || !applyBtn) {
+    return;
+  }
+  applyBtn.addEventListener("click", () => {
+    const district = select.value;
+    if (district) {
+      window.location.href = `/map?district=${encodeURIComponent(district)}`;
+    }
+  });
+}
+
+async function checkAuth() {
+  try {
+    await axios.get("/api/me");
+    if (profileLink) {
+      profileLink.classList.remove("d-none");
+    }
+    authButtons.forEach((btn) => btn.classList.add("d-none"));
+  } catch (error) {
+    if (profileLink) {
+      profileLink.classList.add("d-none");
+    }
+    authButtons.forEach((btn) => btn.classList.remove("d-none"));
   }
 }
 
@@ -168,4 +232,116 @@ dogSelect.addEventListener("change", () => {
   loadDetails();
 });
 
+function showAuthStatus(message, isSuccess) {
+  if (!authStatus) {
+    return;
+  }
+  authStatus.textContent = message;
+  authStatus.classList.remove("d-none", "alert-success", "alert-danger");
+  authStatus.classList.add(isSuccess ? "alert-success" : "alert-danger");
+}
+
+function closeAuthModal() {
+  if (!authModalElement) {
+    return;
+  }
+  const instance =
+    bootstrap.Modal.getInstance(authModalElement) ||
+    new bootstrap.Modal(authModalElement);
+  instance.hide();
+}
+
+function showLoginForm() {
+  if (!loginForm || !registerForm) {
+    return;
+  }
+  authTitle.textContent = "Авторизация";
+  loginForm.classList.remove("d-none");
+  registerForm.classList.add("d-none");
+  showRegisterBtn.classList.remove("d-none");
+  showLoginBtn.classList.add("d-none");
+  if (authModalDialog) {
+    authModalDialog.classList.remove("modal-lg");
+    authModalDialog.classList.add("modal-md");
+  }
+}
+
+function showRegisterForm() {
+  if (!loginForm || !registerForm) {
+    return;
+  }
+  authTitle.textContent = "Регистрация";
+  registerForm.classList.remove("d-none");
+  loginForm.classList.add("d-none");
+  showRegisterBtn.classList.add("d-none");
+  showLoginBtn.classList.remove("d-none");
+  if (authModalDialog) {
+    authModalDialog.classList.remove("modal-md");
+    authModalDialog.classList.add("modal-lg");
+  }
+}
+
+if (loginForm) {
+  loginForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const formData = new FormData(loginForm);
+    const payload = Object.fromEntries(formData.entries());
+    try {
+      await axios.post("/api/login", payload);
+      showAuthStatus("Успешный вход.", true);
+      loginForm.reset();
+      await checkAuth();
+      closeAuthModal();
+    } catch (error) {
+      const message = error.response?.data?.error || "Ошибка авторизации.";
+      showAuthStatus(message, false);
+    }
+  });
+}
+
+if (registerForm) {
+  registerForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const formData = new FormData(registerForm);
+    const payload = Object.fromEntries(formData.entries());
+    try {
+      await axios.post("/api/register", payload);
+      await axios.post("/api/login", {
+        username: payload.username,
+        password: payload.password,
+      });
+      showAuthStatus("Регистрация прошла успешно.", true);
+      registerForm.reset();
+      await checkAuth();
+      closeAuthModal();
+    } catch (error) {
+      const message =
+        error.response?.data?.error || "Не удалось зарегистрироваться.";
+      showAuthStatus(message, false);
+    }
+  });
+}
+
+if (showRegisterBtn) {
+  showRegisterBtn.addEventListener("click", showRegisterForm);
+}
+if (showLoginBtn) {
+  showLoginBtn.addEventListener("click", showLoginForm);
+}
+
+if (authModalElement) {
+  authModalElement.addEventListener("show.bs.modal", (event) => {
+    const trigger = event.relatedTarget;
+    const action = trigger?.getAttribute("data-auth-action");
+    if (action === "register") {
+      showRegisterForm();
+    } else {
+      showLoginForm();
+    }
+  });
+}
+
 initMap();
+loadDistricts();
+bindDistrictFilter();
+checkAuth();
