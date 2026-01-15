@@ -12,5 +12,6 @@ def create_app():
         template_folder=str(base_dir / "templates"),
         static_folder=str(base_dir / "static"),
     )
+    app.config["SECRET_KEY"] = "dog_playgrounds_secret"
     app.register_blueprint(main_bp)
     return app

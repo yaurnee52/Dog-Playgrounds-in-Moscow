@@ -1,7 +1,7 @@
 from datetime import date, datetime, timedelta
 
 import mysql.connector
-from flask import Blueprint, jsonify, render_template, request
+from flask import Blueprint, jsonify, render_template, request, session
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from .config import CATEGORY_LABELS, DB_CONFIG, SLOT_HOURS
@@ -20,6 +20,10 @@ def index():
 def map_view():
     return render_template("map.html")
 
+
+@bp.route("/profile")
+def profile_view():
+    return render_template("profile.html")
 
 @bp.route("/api/playgrounds")
 def get_playgrounds():
@@ -246,6 +250,85 @@ def get_dogs():
     return jsonify(rows)
 
 
+@bp.route("/api/me")
+def get_me():
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify({"error": "Not authorized"}), 401
+    with get_db() as conn:
+        with conn.cursor(dictionary=True) as cur:
+            cur.execute(
+                """
+                SELECT id, username, email, created_at
+                FROM users
+                WHERE id = %s
+                """,
+                (user_id,),
+            )
+            user_row = cur.fetchone()
+    if not user_row:
+        return jsonify({"error": "User not found"}), 404
+    return jsonify(user_row)
+
+
+@bp.route("/api/my-dogs")
+def get_my_dogs():
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify({"error": "Not authorized"}), 401
+    with get_db() as conn:
+        with conn.cursor(dictionary=True) as cur:
+            cur.execute(
+                """
+                SELECT d.id, d.name, d.breed, bc.code AS category_code
+                FROM dogs d
+                JOIN breed_categories bc ON d.category_id = bc.id
+                WHERE d.user_id = %s
+                ORDER BY d.name
+                """,
+                (user_id,),
+            )
+            rows = cur.fetchall()
+    return jsonify(rows)
+
+
+@bp.route("/api/dogs/add", methods=["POST"])
+def add_dog():
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify({"error": "Not authorized"}), 401
+    payload = request.get_json(silent=True) or {}
+    dog_name = (payload.get("dog_name") or "").strip()
+    dog_breed = (payload.get("dog_breed") or "").strip() or None
+    dog_category = (payload.get("dog_category") or "").strip().upper()
+
+    if not dog_name or not dog_category:
+        return jsonify({"error": "Missing required fields"}), 400
+    if dog_category not in CATEGORY_LABELS:
+        return jsonify({"error": "Invalid dog category"}), 400
+
+    with get_db() as conn:
+        with conn.cursor(dictionary=True) as cur:
+            cur.execute(
+                "SELECT id FROM breed_categories WHERE code = %s",
+                (dog_category,),
+            )
+            category_row = cur.fetchone()
+            if not category_row:
+                return jsonify({"error": "Dog category not found"}), 400
+
+            cur.execute(
+                """
+                INSERT INTO dogs (user_id, category_id, name, breed)
+                VALUES (%s, %s, %s, %s)
+                """,
+                (user_id, category_row["id"], dog_name, dog_breed),
+            )
+        conn.commit()
+
+    return jsonify({"success": True})
+
+
 @bp.route("/api/register", methods=["POST"])
 def register_user():
     payload = request.get_json(silent=True) or {}
@@ -306,6 +389,12 @@ def register_user():
     return jsonify({"success": True})
 
 
+@bp.route("/api/logout", methods=["POST"])
+def logout_user():
+    session.pop("user_id", None)
+    return jsonify({"success": True})
+
+
 @bp.route("/api/login", methods=["POST"])
 def login_user():
     payload = request.get_json(silent=True) or {}
@@ -332,6 +421,7 @@ def login_user():
     ):
         return jsonify({"error": "Invalid username or password"}), 401
 
+    session["user_id"] = user_row["id"]
     return jsonify({"success": True, "user_id": user_row["id"], "username": user_row["username"]})
 
 
