@@ -9,7 +9,7 @@
       rel="stylesheet"
     />
   </head>
-  <body class="bg-light">
+  <body class="bg-light d-flex flex-column min-vh-100">
     <nav class="navbar navbar-expand-lg bg-white border-bottom">
       <div class="container">
         <span class="navbar-brand fw-semibold">Dog Playground Safety</span>
@@ -189,9 +189,18 @@
       </div>
     </div>
 
-    <footer class="py-4 border-top bg-white">
-      <div class="container text-muted small">
-        Учебный проект: сервис безопасного выгула собак
+    <footer class="py-4 border-top bg-white mt-auto">
+      <div class="container text-muted fs-6 d-flex flex-wrap justify-content-between gap-2">
+        <span>Учебный проект: сервис безопасного выгула собак</span>
+        <a
+          class="text-muted text-decoration-none"
+          href="https://data.mos.ru/opendata/2663?pageSize=10&pageIndex=0"
+          target="_blank"
+          rel="noopener"
+        >
+        Датасет:
+        <span class="text-primary">Площадки для выгула (дрессировки) собак</span>
+        </a>
       </div>
     </footer>
 
