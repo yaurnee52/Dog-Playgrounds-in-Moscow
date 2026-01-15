@@ -83,18 +83,13 @@
             <p id="modalAddress" class="mb-1"></p>
             <p id="modalMeta" class="text-muted mb-3"></p>
 
-            <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+            <div class="d-flex flex-wrap align-items-center gap-2 mb-3" id="dogSelectContainer">
               <label for="dogSelect" class="form-label mb-0">Собака:</label>
               <select id="dogSelect" class="form-select w-auto"></select>
-              <label for="categorySelect" class="form-label mb-0"
-                >Категория для просмотра:</label
-              >
-              <select id="categorySelect" class="form-select w-auto">
-                <option value="SMALL">Декоративные (SMALL)</option>
-                <option value="STANDARD" selected>Стандартные (STANDARD)</option>
-                <option value="ACTIVE">Активные (ACTIVE)</option>
-                <option value="HIGH_RISK">Служебные / Бойцовские (HIGH_RISK)</option>
-              </select>
+            </div>
+
+            <div id="bookingAuthWarning" class="alert alert-warning d-none mb-3">
+              Войдите в аккаунт, чтобы записаться.
             </div>
 
             <div class="legend d-flex flex-wrap gap-2 mb-3">
@@ -104,6 +99,11 @@
             </div>
 
             <div id="slotsContainer" class="slots-grid"></div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-primary" id="bookSlotBtn" disabled>
+              Записаться
+            </button>
           </div>
         </div>
       </div>

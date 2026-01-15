@@ -176,6 +176,21 @@ def book_slot():
 
     with get_db() as conn:
         with conn.cursor(dictionary=True) as cur:
+            # Check if dog already has a booking at this time
+            cur.execute(
+                """
+                SELECT id FROM bookings
+                WHERE dog_id = %s
+                  AND DATE(start_time) = %s
+                  AND HOUR(start_time) = %s
+                  AND status = 'confirmed'
+                LIMIT 1
+                """,
+                (dog_id, slot_date, slot_hour),
+            )
+            if cur.fetchone():
+                return jsonify({"error": "Собака уже записана на это время."}), 409
+
             cur.execute(
                 """
                 SELECT bc.code AS category_code

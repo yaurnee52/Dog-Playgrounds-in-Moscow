@@ -22,8 +22,10 @@ const addressEl = document.getElementById("modalAddress");
 const metaEl = document.getElementById("modalMeta");
 const photoEl = document.getElementById("modalPhoto");
 const slotsContainer = document.getElementById("slotsContainer");
-const categorySelect = document.getElementById("categorySelect");
 const dogSelect = document.getElementById("dogSelect");
+const dogSelectContainer = document.getElementById("dogSelectContainer");
+const bookingAuthWarning = document.getElementById("bookingAuthWarning");
+const bookSlotBtn = document.getElementById("bookSlotBtn");
 const authModalElement = document.getElementById("authModal");
 const authModalDialog = document.querySelector("#authModal .modal-dialog");
 const loginForm = document.getElementById("loginForm");
@@ -38,6 +40,7 @@ const authButtons = document.querySelectorAll("[data-auth-button]");
 let currentPlaygroundId = null;
 let dogsCache = [];
 let dogsById = {};
+let selectedSlotHour = null;
 
 async function loadPlaygrounds() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -120,6 +123,8 @@ async function checkAuth() {
 
 async function openPlayground(playgroundId) {
   currentPlaygroundId = playgroundId;
+  selectedSlotHour = null;
+  bookSlotBtn.disabled = true;
   await loadDogs();
   await loadDetails();
   modal.show();
@@ -129,11 +134,10 @@ async function loadDetails() {
   if (!currentPlaygroundId) {
     return;
   }
-  const category = categorySelect.value;
   const dogId = dogSelect.value;
   const response = await axios.get(
     `/api/playgrounds/${currentPlaygroundId}/details`,
-    { params: { category, dog_id: dogId || undefined } }
+    { params: { dog_id: dogId || undefined } }
   );
   renderModal(response.data);
 }
@@ -161,32 +165,55 @@ function renderModal(details) {
   details.slots.forEach((slot) => {
     const button = document.createElement("button");
     button.type = "button";
-    button.className = `btn btn-sm slot-btn ${statusToClass(slot.status)}`;
+    const isSelected = selectedSlotHour === slot.hour;
+    button.className = `btn btn-sm slot-btn ${statusToClass(slot.status, isSelected)}`;
     button.textContent = `${slot.label} (${slot.count}/${slot.limit})`;
-    button.disabled = slot.status === "full";
-    button.addEventListener("click", () => bookSlot(slot.hour));
+    
+    // Disable if full. If no dog selected, disable all (or allow view but not select).
+    // If user not authorized (no dogs), disable.
+    const canBook = dogsCache.length > 0 && dogSelect.value;
+    button.disabled = slot.status === "full" || !canBook;
+
+    if (!button.disabled) {
+      button.addEventListener("click", () => selectSlot(slot.hour));
+    }
     slotsContainer.appendChild(button);
   });
 }
 
-function statusToClass(status) {
+function selectSlot(hour) {
+  selectedSlotHour = hour;
+  bookSlotBtn.disabled = false;
+  loadDetails(); // Re-render to update selection styling
+}
+
+function statusToClass(status, isSelected) {
+  if (isSelected) return "btn-primary";
   if (status === "free") return "btn-success";
   if (status === "joinable") return "btn-warning";
   return "btn-danger";
 }
 
-async function bookSlot(hour) {
+async function bookSlot() {
   const dogId = dogSelect.value;
   if (!dogId) {
     alert("Выберите собаку для бронирования.");
     return;
   }
+  if (selectedSlotHour === null) {
+      alert("Выберите время.");
+      return;
+  }
+
   try {
     await axios.post("/api/book", {
       playground_id: currentPlaygroundId,
-      slot_hour: hour,
+      slot_hour: selectedSlotHour,
       dog_id: dogId,
     });
+    alert("Вы успешно записались!");
+    selectedSlotHour = null;
+    bookSlotBtn.disabled = true;
     await loadDetails();
   } catch (error) {
     const message =
@@ -196,21 +223,49 @@ async function bookSlot(hour) {
 }
 
 async function loadDogs() {
-  if (dogsCache.length) {
-    return;
+  let isAuth = false;
+  try {
+      const response = await axios.get("/api/my-dogs");
+      dogsCache = response.data || [];
+      isAuth = true;
+  } catch (e) {
+      dogsCache = [];
+      isAuth = false;
   }
-  const response = await axios.get("/api/dogs");
-  dogsCache = response.data || [];
+
   dogsById = dogsCache.reduce((acc, dog) => {
     acc[String(dog.id)] = dog;
     return acc;
   }, {});
 
   dogSelect.innerHTML = "";
-  const emptyOption = document.createElement("option");
-  emptyOption.value = "";
-  emptyOption.textContent = "Выберите собаку";
-  dogSelect.appendChild(emptyOption);
+  
+  if (!isAuth) {
+      dogSelectContainer.classList.add("d-none");
+      bookSlotBtn.classList.add("d-none");
+      if (bookingAuthWarning) {
+        bookingAuthWarning.textContent = "Войдите в аккаунт, чтобы записаться.";
+        bookingAuthWarning.classList.remove("d-none");
+      }
+      return;
+  }
+  
+  if (dogsCache.length === 0) {
+      dogSelectContainer.classList.add("d-none");
+      bookSlotBtn.classList.add("d-none");
+      if (bookingAuthWarning) {
+        bookingAuthWarning.textContent = "У вас нет добавленных собак. Добавьте собаку в личном кабинете.";
+        bookingAuthWarning.classList.remove("d-none");
+      }
+      return;
+  }
+
+  if (bookingAuthWarning) {
+    bookingAuthWarning.classList.add("d-none");
+  }
+  
+  dogSelectContainer.classList.remove("d-none");
+  bookSlotBtn.classList.remove("d-none");
 
   dogsCache.forEach((dog) => {
     const option = document.createElement("option");
@@ -218,17 +273,22 @@ async function loadDogs() {
     option.textContent = `${dog.name} (${dog.category_code})`;
     dogSelect.appendChild(option);
   });
+  
+  // Select first by default if exists
+  if (dogsCache.length > 0) {
+      dogSelect.value = dogsCache[0].id;
+  }
 }
 
-categorySelect.addEventListener("change", () => {
-  loadDetails();
-});
+if (bookSlotBtn) {
+  bookSlotBtn.addEventListener("click", bookSlot);
+}
 
 dogSelect.addEventListener("change", () => {
-  const selectedDog = dogsById[dogSelect.value];
-  if (selectedDog && selectedDog.category_code) {
-    categorySelect.value = selectedDog.category_code;
-  }
+  // Reset selection when dog changes? Or keep it?
+  // Maybe keep it, but refresh details to see if available for new dog
+  selectedSlotHour = null;
+  bookSlotBtn.disabled = true;
   loadDetails();
 });
 
