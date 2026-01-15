@@ -18,6 +18,15 @@
             class="btn btn-outline-secondary"
             data-bs-toggle="modal"
             data-bs-target="#authModal"
+            data-auth-action="register"
+          >
+            Регистрация
+          </button>
+          <button
+            class="btn btn-outline-secondary"
+            data-bs-toggle="modal"
+            data-bs-target="#authModal"
+            data-auth-action="login"
           >
             Войти
           </button>
@@ -40,13 +49,6 @@
             </p>
             <div class="d-flex flex-wrap gap-2">
               <a class="btn btn-primary" href="#search">Найти площадки</a>
-              <button
-                class="btn btn-outline-secondary"
-                data-bs-toggle="modal"
-                data-bs-target="#authModal"
-              >
-                Регистрация
-              </button>
             </div>
           </div>
           <div class="col-lg-5">
@@ -96,7 +98,7 @@
       tabindex="-1"
       aria-hidden="true"
     >
-      <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-dialog modal-md modal-dialog-centered">
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title" id="authTitle">Авторизация</h5>
@@ -111,11 +113,11 @@
             <div id="authStatus" class="alert d-none" role="alert"></div>
 
             <form id="loginForm" class="row g-3">
-              <div class="col-md-6">
+              <div class="col-12">
                 <label class="form-label">Логин</label>
                 <input class="form-control" name="username" required />
               </div>
-              <div class="col-md-6">
+              <div class="col-12">
                 <label class="form-label">Пароль</label>
                 <input
                   class="form-control"
@@ -131,7 +133,7 @@
 
             <form id="registerForm" class="row g-3 d-none">
               <div class="col-md-6">
-                <label class="form-label">Имя пользователя</label>
+                <label class="form-label">Логин</label>
                 <input class="form-control" name="username" required />
               </div>
               <div class="col-md-6">

@@ -8,6 +8,8 @@ const showRegisterBtn = document.getElementById("showRegisterBtn");
 const showLoginBtn = document.getElementById("showLoginBtn");
 const authStatus = document.getElementById("authStatus");
 const authTitle = document.getElementById("authTitle");
+const authModalDialog = document.querySelector("#authModal .modal-dialog");
+const authModal = document.getElementById("authModal");
 
 async function loadDistricts() {
   let districts = [];
@@ -129,6 +131,10 @@ function showLoginForm() {
   registerForm.classList.add("d-none");
   showRegisterBtn.classList.remove("d-none");
   showLoginBtn.classList.add("d-none");
+  if (authModalDialog) {
+    authModalDialog.classList.remove("modal-lg");
+    authModalDialog.classList.add("modal-md");
+  }
 }
 
 function showRegisterForm() {
@@ -137,10 +143,26 @@ function showRegisterForm() {
   loginForm.classList.add("d-none");
   showRegisterBtn.classList.add("d-none");
   showLoginBtn.classList.remove("d-none");
+  if (authModalDialog) {
+    authModalDialog.classList.remove("modal-md");
+    authModalDialog.classList.add("modal-lg");
+  }
 }
 
 showRegisterBtn.addEventListener("click", showRegisterForm);
 showLoginBtn.addEventListener("click", showLoginForm);
+
+if (authModal) {
+  authModal.addEventListener("show.bs.modal", (event) => {
+    const trigger = event.relatedTarget;
+    const action = trigger?.getAttribute("data-auth-action");
+    if (action === "register") {
+      showRegisterForm();
+    } else {
+      showLoginForm();
+    }
+  });
+}
 
 districtSelect.addEventListener("change", updateMapLink);
 searchBtn.addEventListener("click", searchPlaygrounds);
