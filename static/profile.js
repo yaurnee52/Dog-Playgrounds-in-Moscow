@@ -79,5 +79,45 @@ logoutBtn.addEventListener("click", async () => {
   window.location.href = "/";
 });
 
+const bookingsList = document.getElementById("bookingsList");
+
+async function loadBookings() {
+  bookingsList.innerHTML = "";
+  try {
+    const response = await axios.get("/api/my-bookings");
+    const bookings = response.data || [];
+    if (!bookings.length) {
+      bookingsList.innerHTML = "<div class=\"text-muted\">История записей пуста.</div>";
+      return;
+    }
+    bookings.forEach((booking) => {
+      const item = document.createElement("div");
+      item.className = "list-group-item";
+      
+      const dateObj = new Date(booking.start_time);
+      const dateStr = dateObj.toLocaleDateString();
+      const timeStr = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+      const parkName =
+        booking.park_name && booking.park_name !== "[]"
+          ? booking.park_name
+          : `Площадка №${booking.playground_id}`;
+
+      item.innerHTML = `
+        <div class="d-flex w-100 justify-content-between">
+            <h6 class="mb-1">${parkName}</h6>
+            <small class="text-muted">${dateStr} ${timeStr}</small>
+        </div>
+        <p class="mb-1 small text-muted">${booking.address || ""}</p>
+        <small class="text-primary">Собака: ${booking.dog_name}</small>
+      `;
+      bookingsList.appendChild(item);
+    });
+  } catch (error) {
+    bookingsList.innerHTML = "<div class=\"text-danger\">Ошибка загрузки истории.</div>";
+  }
+}
+
 loadUser();
 loadDogs();
+loadBookings();

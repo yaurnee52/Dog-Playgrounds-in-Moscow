@@ -1,5 +1,22 @@
+import re
 from .config import SLOT_HOURS
 from .db import get_db
+
+
+def clean_park_name(raw_name):
+    """
+    Extracts 'value' from strings like: {global_id=4331863, value=Парк «50-летия Октября»}
+    Or returns the raw name if it doesn't match the pattern.
+    """
+    if not raw_name or raw_name == "[]":
+        return None
+    
+    # Try to find value=... pattern
+    match = re.search(r"value=([^}]+)", raw_name)
+    if match:
+        return match.group(1).strip()
+    
+    return raw_name.strip()
 
 
 def parse_photo_url(photo_id_text):

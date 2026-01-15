@@ -6,7 +6,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 from .config import CATEGORY_LABELS, DB_CONFIG, SLOT_HOURS
 from .db import get_db
-from .services import build_slot_statuses, parse_photo_url, evaluate_slot
+from .services import build_slot_statuses, parse_photo_url, evaluate_slot, clean_park_name
 
 bp = Blueprint("main", __name__)
 
@@ -82,6 +82,10 @@ def search_playgrounds():
                     (district,),
                 )
                 rows = cur.fetchall()
+        
+        for row in rows:
+            row["park_name"] = clean_park_name(row["park_name"])
+
         return jsonify(rows)
     except mysql.connector.Error as exc:
         return jsonify({"error": "Database error", "details": str(exc)}), 500
@@ -152,6 +156,7 @@ def get_playground_details(playground_id):
     today = date.today()
     slots = build_slot_statuses(playground_id, today, requested_category)
     row["photo_url"] = parse_photo_url(row.get("photo_id"))
+    row["park_name"] = clean_park_name(row.get("park_name"))
     row["requested_category"] = requested_category
     row["slots"] = slots
     return jsonify(row)
@@ -176,7 +181,7 @@ def book_slot():
 
     with get_db() as conn:
         with conn.cursor(dictionary=True) as cur:
-            # Check if dog already has a booking at this time
+
             cur.execute(
                 """
                 SELECT id FROM bookings
@@ -304,6 +309,35 @@ def get_my_dogs():
                 (user_id,),
             )
             rows = cur.fetchall()
+    return jsonify(rows)
+
+
+@bp.route("/api/my-bookings")
+def get_my_bookings():
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify({"error": "Not authorized"}), 401
+    with get_db() as conn:
+        with conn.cursor(dictionary=True) as cur:
+            cur.execute(
+                """
+                SELECT b.id, b.start_time, b.end_time, b.status,
+                       d.name AS dog_name,
+                       p.id AS playground_id,
+                       p.park_name, p.address
+                FROM bookings b
+                JOIN dogs d ON b.dog_id = d.id
+                JOIN playgrounds p ON b.playground_id = p.id
+                WHERE d.user_id = %s
+                ORDER BY b.start_time DESC
+                """,
+                (user_id,),
+            )
+            rows = cur.fetchall()
+
+    for row in rows:
+        row["park_name"] = clean_park_name(row["park_name"])
+
     return jsonify(rows)
 
 

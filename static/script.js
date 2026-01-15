@@ -401,7 +401,16 @@ if (authModalElement) {
   });
 }
 
+async function checkUrlParams() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const playgroundId = urlParams.get("playground_id");
+  if (playgroundId) {
+    await openPlayground(playgroundId);
+  }
+}
+
 initMap();
 loadDistricts();
 bindDistrictFilter();
 checkAuth();
+checkUrlParams();

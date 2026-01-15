@@ -82,7 +82,7 @@ function renderResults(items, district) {
         : `Площадка №${item.id}`;
     const link = document.createElement("a");
     link.className = "list-group-item list-group-item-action";
-    link.href = `/map?district=${encodeURIComponent(district)}`;
+    link.href = `/map?district=${encodeURIComponent(district)}&playground_id=${item.id}`;
     link.target = "_blank";
     link.rel = "noopener";
 
