@@ -10,6 +10,17 @@ const authStatus = document.getElementById("authStatus");
 const authTitle = document.getElementById("authTitle");
 const authModalDialog = document.querySelector("#authModal .modal-dialog");
 const authModal = document.getElementById("authModal");
+const profileLink = document.getElementById("profileLink");
+const authButtons = document.querySelectorAll("[data-auth-button]");
+
+function closeAuthModal() {
+  if (!authModal) {
+    return;
+  }
+  const modalInstance =
+    bootstrap.Modal.getInstance(authModal) || new bootstrap.Modal(authModal);
+  modalInstance.hide();
+}
 
 async function loadDistricts() {
   let districts = [];
@@ -103,6 +114,8 @@ loginForm.addEventListener("submit", async (event) => {
     await axios.post("/api/login", payload);
     showAuthStatus("Успешный вход.", true);
     loginForm.reset();
+    updateAuthState(true);
+    closeAuthModal();
   } catch (error) {
     const message = error.response?.data?.error || "Ошибка авторизации.";
     showAuthStatus(message, false);
@@ -115,9 +128,14 @@ registerForm.addEventListener("submit", async (event) => {
   const payload = Object.fromEntries(formData.entries());
   try {
     await axios.post("/api/register", payload);
+    await axios.post("/api/login", {
+      username: payload.username,
+      password: payload.password,
+    });
     showAuthStatus("Регистрация прошла успешно.", true);
     registerForm.reset();
-    showLoginForm();
+    updateAuthState(true);
+    closeAuthModal();
   } catch (error) {
     const message =
       error.response?.data?.error || "Не удалось зарегистрироваться.";
@@ -164,7 +182,26 @@ if (authModal) {
   });
 }
 
+function updateAuthState(isLoggedIn) {
+  authButtons.forEach((btn) => {
+    btn.classList.toggle("d-none", isLoggedIn);
+  });
+  if (profileLink) {
+    profileLink.classList.toggle("d-none", !isLoggedIn);
+  }
+}
+
+async function checkAuth() {
+  try {
+    await axios.get("/api/me");
+    updateAuthState(true);
+  } catch (error) {
+    updateAuthState(false);
+  }
+}
+
 districtSelect.addEventListener("change", updateMapLink);
 searchBtn.addEventListener("click", searchPlaygrounds);
 
 loadDistricts();
+checkAuth();
