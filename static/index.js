@@ -1,6 +1,7 @@
 const districtSelect = document.getElementById("districtSelect");
 const searchBtn = document.getElementById("searchBtn");
 const openMapBtn = document.getElementById("openMapBtn");
+let tomSelectInstance = null;
 const searchResults = document.getElementById("searchResults");
 const loginForm = document.getElementById("loginForm");
 const registerForm = document.getElementById("registerForm");
@@ -32,16 +33,32 @@ async function loadDistricts() {
       "<div class=\"text-danger\">Не удалось загрузить районы.</div>";
     return;
   }
-  districtSelect.innerHTML = "";
-  districts.forEach((district, index) => {
+  
+  districtSelect.innerHTML = '<option value="">Выберите район...</option>';
+  
+  districts.forEach((district) => {
     const option = document.createElement("option");
     option.value = district;
     option.textContent = district;
-    if (index === 0) {
-      option.selected = true;
-    }
     districtSelect.appendChild(option);
   });
+  
+  // Initialize Tom Select
+  if (tomSelectInstance) {
+    tomSelectInstance.destroy();
+  }
+  
+  tomSelectInstance = new TomSelect(districtSelect, {
+    create: false,
+    sortField: {
+      field: "text",
+      direction: "asc"
+    },
+    placeholder: "Выберите район...",
+    allowEmptyOption: true,
+    onChange: updateMapLink
+  });
+  
   updateMapLink();
 }
 
@@ -55,10 +72,25 @@ async function searchPlaygrounds() {
   if (!district) {
     return;
   }
+  
+  const params = { district };
+  
+  // Добавляем фильтры
+  if (document.getElementById("filterLighting")?.checked) {
+    params.lighting = "1";
+  }
+  if (document.getElementById("filterFencing")?.checked) {
+    params.fencing = "1";
+  }
+  if (document.getElementById("filterElements")?.checked) {
+    params.elements = "1";
+  }
+  
+  console.log("Поиск площадок с параметрами:", params);
+  
   try {
-    const response = await axios.get("/api/playgrounds/search", {
-      params: { district },
-    });
+    const response = await axios.get("/api/playgrounds/search", { params });
+    console.log("Получено площадок:", response.data?.length || 0);
     renderResults(response.data || [], district);
   } catch (error) {
     searchResults.innerHTML =
@@ -66,7 +98,21 @@ async function searchPlaygrounds() {
   }
 }
 
+function applyFilters() {
+  const district = districtSelect.value;
+  if (district) {
+    searchPlaygrounds();
+  }
+}
+
 function renderResults(items, district) {
+  const filtersContainer = document.getElementById("filtersContainer");
+  if (items.length > 0) {
+    filtersContainer.classList.remove("d-none");
+  } else {
+    filtersContainer.classList.add("d-none");
+  }
+  
   searchResults.innerHTML = "";
   if (!items.length) {
     const empty = document.createElement("div");
@@ -200,8 +246,36 @@ async function checkAuth() {
   }
 }
 
-districtSelect.addEventListener("change", updateMapLink);
+// Tom Select handles change events internally via configuration
+// districtSelect.addEventListener("change", updateMapLink);
 searchBtn.addEventListener("click", searchPlaygrounds);
+
+// Обработчики фильтров - добавляем после загрузки DOM
+function setupFilters() {
+  const lightingCheckbox = document.getElementById("filterLighting");
+  const fencingCheckbox = document.getElementById("filterFencing");
+  const elementsCheckbox = document.getElementById("filterElements");
+  
+  if (lightingCheckbox) {
+    lightingCheckbox.addEventListener("change", () => {
+      console.log("Фильтр освещение изменен:", lightingCheckbox.checked);
+      applyFilters();
+    });
+  }
+  if (fencingCheckbox) {
+    fencingCheckbox.addEventListener("change", () => {
+      console.log("Фильтр ограждение изменен:", fencingCheckbox.checked);
+      applyFilters();
+    });
+  }
+  if (elementsCheckbox) {
+    elementsCheckbox.addEventListener("change", () => {
+      console.log("Фильтр элементы изменен:", elementsCheckbox.checked);
+      applyFilters();
+    });
+  }
+}
 
 loadDistricts();
 checkAuth();
+setupFilters();

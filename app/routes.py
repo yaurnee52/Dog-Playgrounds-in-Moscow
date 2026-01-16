@@ -30,31 +30,54 @@ def get_playgrounds():
     district = request.args.get("district")
     if district:
         district = district.strip()
+    
+    # Получаем фильтры
+    lighting = request.args.get("lighting")
+    fencing = request.args.get("fencing")
+    elements = request.args.get("elements")
+    
     try:
         with get_db() as conn:
             with conn.cursor(dictionary=True) as cur:
                 if district:
-                    cur.execute(
-                        """
+                    query = """
                         SELECT id,
                                CAST(lat AS DOUBLE) AS lat,
                                CAST(lon AS DOUBLE) AS lon
                         FROM playgrounds
                         WHERE lat IS NOT NULL AND lon IS NOT NULL
                           AND TRIM(district) = %s
-                        """,
-                        (district,),
-                    )
+                    """
+                    params = [district]
+                    
+                    # Добавляем фильтры
+                    if lighting:
+                        query += " AND lighting = 'да'"
+                    if fencing:
+                        query += " AND fencing = 'да'"
+                    if elements:
+                        query += " AND elements IS NOT NULL AND elements <> '' AND elements <> '[]'"
+                    
+                    cur.execute(query, params)
                 else:
-                    cur.execute(
-                        """
+                    query = """
                         SELECT id,
                                CAST(lat AS DOUBLE) AS lat,
                                CAST(lon AS DOUBLE) AS lon
                         FROM playgrounds
                         WHERE lat IS NOT NULL AND lon IS NOT NULL
-                        """
-                    )
+                    """
+                    params = []
+                    
+                    # Добавляем фильтры
+                    if lighting:
+                        query += " AND lighting = 'да'"
+                    if fencing:
+                        query += " AND fencing = 'да'"
+                    if elements:
+                        query += " AND elements IS NOT NULL AND elements <> '' AND elements <> '[]'"
+                    
+                    cur.execute(query, params)
                 rows = cur.fetchall()
         return jsonify(rows)
     except mysql.connector.Error as exc:
@@ -67,20 +90,35 @@ def search_playgrounds():
     if not district:
         return jsonify({"error": "District is required"}), 400
     district = district.strip()
+    
+    # Получаем фильтры
+    lighting = request.args.get("lighting")
+    fencing = request.args.get("fencing")
+    elements = request.args.get("elements")
+    
     try:
         with get_db() as conn:
             with conn.cursor(dictionary=True) as cur:
-                cur.execute(
-                    """
-                    SELECT id, park_name, address, district,
+                query = """
+                    SELECT id, park_name, address, district, lighting, fencing, elements,
                            CAST(lat AS DOUBLE) AS lat,
                            CAST(lon AS DOUBLE) AS lon
                     FROM playgrounds
                     WHERE TRIM(district) = %s
-                    ORDER BY id
-                    """,
-                    (district,),
-                )
+                """
+                params = [district]
+                
+                # Добавляем фильтры
+                if lighting:
+                    query += " AND lighting = 'да'"
+                if fencing:
+                    query += " AND fencing = 'да'"
+                if elements:
+                    query += " AND elements IS NOT NULL AND elements <> '' AND elements <> '[]'"
+                
+                query += " ORDER BY id"
+                
+                cur.execute(query, params)
                 rows = cur.fetchall()
         
         for row in rows:

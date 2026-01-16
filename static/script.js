@@ -42,15 +42,51 @@ let dogsCache = [];
 let dogsById = {};
 let selectedSlotHour = null;
 
+let currentMarkers = [];
+
 async function loadPlaygrounds() {
+  if (!map) {
+    return; // Карта еще не инициализирована
+  }
+  
+  // Удаляем старые маркеры
+  currentMarkers.forEach(marker => {
+    try {
+      map.removeLayer(marker);
+    } catch (e) {
+      // Игнорируем ошибки при удалении
+    }
+  });
+  currentMarkers = [];
+  
   const urlParams = new URLSearchParams(window.location.search);
   const district = urlParams.get("district");
+  
+  const params = district ? { district } : {};
+  
+  // Добавляем фильтры
+  const lightingCheckbox = document.getElementById("mapFilterLighting");
+  const fencingCheckbox = document.getElementById("mapFilterFencing");
+  const elementsCheckbox = document.getElementById("mapFilterElements");
+  
+  if (lightingCheckbox && lightingCheckbox.checked) {
+    params.lighting = "1";
+  }
+  if (fencingCheckbox && fencingCheckbox.checked) {
+    params.fencing = "1";
+  }
+  if (elementsCheckbox && elementsCheckbox.checked) {
+    params.elements = "1";
+  }
+  
+  console.log("Загрузка площадок с параметрами:", params);
+  
   let response;
   try {
-    response = await axios.get("/api/playgrounds", {
-      params: district ? { district } : {},
-    });
+    response = await axios.get("/api/playgrounds", { params });
+    console.log("Получено площадок на карте:", response.data?.length || 0);
   } catch (error) {
+    console.error("Ошибка загрузки площадок:", error);
     alert("Не удалось загрузить площадки.");
     return;
   }
@@ -59,6 +95,7 @@ async function loadPlaygrounds() {
     if (playground.lat && playground.lon) {
       const marker = DG.marker([playground.lat, playground.lon]).addTo(map);
       marker.on("click", () => openPlayground(playground.id));
+      currentMarkers.push(marker);
       bounds.push([playground.lat, playground.lon]);
     }
   });
@@ -75,20 +112,37 @@ async function loadDistricts() {
   try {
     const response = await axios.get("/api/districts");
     const districts = response.data || [];
-    select.innerHTML = "";
+    
+    select.innerHTML = '<option value="">Выберите район...</option>';
+    
     districts.forEach((district) => {
       const option = document.createElement("option");
       option.value = district;
       option.textContent = district;
       select.appendChild(option);
     });
+    
+    // Initialize Tom Select
+    const ts = new TomSelect(select, {
+        create: false,
+        sortField: {
+          field: "text",
+          direction: "asc"
+        },
+        placeholder: "Выберите район...",
+        allowEmptyOption: true
+    });
+    
     const urlParams = new URLSearchParams(window.location.search);
     const currentDistrict = urlParams.get("district");
     if (currentDistrict) {
-      select.value = currentDistrict;
+      ts.setValue(currentDistrict);
     }
+    
+    // Привязываем обработчики фильтров после загрузки районов
+    bindDistrictFilter();
   } catch (error) {
-    select.innerHTML = "<option>Ошибка загрузки</option>";
+    console.error("Ошибка загрузки районов", error);
   }
 }
 
@@ -104,6 +158,42 @@ function bindDistrictFilter() {
       window.location.href = `/map?district=${encodeURIComponent(district)}`;
     }
   });
+  
+  // Обработчики фильтров - добавляем после загрузки DOM
+  const lightingCheckbox = document.getElementById("mapFilterLighting");
+  const fencingCheckbox = document.getElementById("mapFilterFencing");
+  const elementsCheckbox = document.getElementById("mapFilterElements");
+  
+  console.log("Привязка обработчиков фильтров:", {
+    lighting: !!lightingCheckbox,
+    fencing: !!fencingCheckbox,
+    elements: !!elementsCheckbox
+  });
+  
+  if (lightingCheckbox) {
+    lightingCheckbox.addEventListener("change", () => {
+      console.log("Фильтр освещение изменен:", lightingCheckbox.checked);
+      if (map) {
+        loadPlaygrounds();
+      }
+    });
+  }
+  if (fencingCheckbox) {
+    fencingCheckbox.addEventListener("change", () => {
+      console.log("Фильтр ограждение изменен:", fencingCheckbox.checked);
+      if (map) {
+        loadPlaygrounds();
+      }
+    });
+  }
+  if (elementsCheckbox) {
+    elementsCheckbox.addEventListener("change", () => {
+      console.log("Фильтр элементы изменен:", elementsCheckbox.checked);
+      if (map) {
+        loadPlaygrounds();
+      }
+    });
+  }
 }
 
 async function checkAuth() {
@@ -409,8 +499,8 @@ async function checkUrlParams() {
   }
 }
 
+// Инициализация в правильном порядке
 initMap();
-loadDistricts();
-bindDistrictFilter();
+loadDistricts(); // bindDistrictFilter вызывается внутри loadDistricts после инициализации Tom Select
 checkAuth();
 checkUrlParams();

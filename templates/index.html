@@ -8,6 +8,10 @@
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
       rel="stylesheet"
     />
+    <link
+      href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.bootstrap5.min.css"
+      rel="stylesheet"
+    />
   </head>
   <body class="bg-light d-flex flex-column min-vh-100">
     <nav class="navbar navbar-expand-lg bg-white border-bottom">
@@ -80,8 +84,10 @@
               Выберите район, чтобы увидеть список площадок и открыть карту с
               метками.
             </p>
-            <div class="d-flex gap-2 flex-wrap">
-              <select id="districtSelect" class="form-select w-auto"></select>
+            <div class="d-flex gap-2 flex-wrap" style="min-width: 300px;">
+              <select id="districtSelect" class="form-select" style="min-width: 250px;">
+                <option value="">Выберите район...</option>
+              </select>
               <button id="searchBtn" class="btn btn-primary">Найти</button>
               <a id="openMapBtn" class="btn btn-outline-primary" href="/map"
                 >Карта района</a
@@ -89,6 +95,31 @@
             </div>
           </div>
           <div class="col-lg-7">
+            <div id="filtersContainer" class="card shadow-sm mb-3 d-none">
+              <div class="card-body">
+                <h6 class="card-title mb-3">Фильтры</h6>
+                <div class="d-flex flex-wrap gap-3">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="filterLighting" />
+                    <label class="form-check-label" for="filterLighting">
+                      Освещение
+                    </label>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="filterFencing" />
+                    <label class="form-check-label" for="filterFencing">
+                      Ограждение
+                    </label>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="filterElements" />
+                    <label class="form-check-label" for="filterElements">
+                      Элементы
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
             <div id="searchResults" class="list-group"></div>
           </div>
         </div>
@@ -192,8 +223,8 @@
       </div>
     </div>
 
-    <footer class="py-4 border-top bg-white mt-auto">
-      <div class="container text-muted fs-6 d-flex flex-wrap justify-content-between gap-2">
+    <footer class="bg-white sticky-footer">
+      <div class="container text-muted small d-flex flex-wrap justify-content-between gap-2 py-2">
         <span>Учебный проект: сервис безопасного выгула собак</span>
         <a
           class="text-muted text-decoration-none"
@@ -213,6 +244,7 @@
     <script
       src="https://cdn.jsdelivr.net/npm/axios@1.6.7/dist/axios.min.js"
     ></script>
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
     <script src="{{ url_for('static', filename='index.js') }}"></script>
   </body>
 </html>
