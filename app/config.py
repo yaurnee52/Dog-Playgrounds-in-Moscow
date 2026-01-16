@@ -1,10 +1,16 @@
+import os
+from dotenv import load_dotenv
+
+# Загружаем переменные окружения из .env файла
+load_dotenv()
+
 DB_CONFIG = {
-    "host": "127.0.0.1",
-    "user": "root",
-    "password": "",
-    "database": "dog_walking_areas",
-    "port": 3306,
-    "use_pure": True,
+    "host": os.getenv("DB_HOST"),
+    "user": os.getenv("DB_USER"),
+    "password": os.getenv("DB_PASSWORD"),
+    "database": os.getenv("DB_NAME"),
+    "port": int(os.getenv("DB_PORT")),
+    "use_pure": os.getenv("DB_USE_PURE", "True").lower() == "true",
 }
 
 SLOT_HOURS = list(range(0, 24))

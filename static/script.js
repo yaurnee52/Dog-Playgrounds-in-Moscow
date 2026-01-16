@@ -232,6 +232,26 @@ async function loadDetails() {
   renderModal(response.data);
 }
 
+// Функция для форматирования времени работы
+function formatWorkingHours(workingHours) {
+  if (!workingHours) return null;
+  
+  // Парсим данные: извлекаем все значения Hours
+  const hours = workingHours.match(/Hours:([^\n]+)/g);
+  if (!hours || hours.length === 0) return null;
+  
+  // Убираем префикс "Hours:" и получаем уникальные значения
+  const uniqueHours = [...new Set(hours.map(h => h.replace('Hours:', '').trim()))];
+  
+  // Если все дни одинаковые
+  if (uniqueHours.length === 1) {
+    return uniqueHours[0] === 'круглосуточно' ? 'Круглосуточно' : `Пн-Вс: ${uniqueHours[0]}`;
+  }
+  
+  // Если разные - показываем просто первое время (или можно все через запятую)
+  return uniqueHours.join(', ');
+}
+
 function renderModal(details) {
   titleEl.textContent = details.park_name && details.park_name !== "[]"
     ? details.park_name
@@ -241,8 +261,33 @@ function renderModal(details) {
   const metaParts = [];
   if (details.district) metaParts.push(details.district);
   if (details.adm_area) metaParts.push(details.adm_area);
-  if (details.working_hours) metaParts.push(details.working_hours.replaceAll("\n", " "));
   metaEl.textContent = metaParts.join(" • ");
+  
+  // Отображаем время работы отдельно, если есть
+  const workingHoursFormatted = formatWorkingHours(details.working_hours);
+  let workingHoursEl = document.getElementById("modalWorkingHours");
+  
+  if (workingHoursFormatted) {
+    // Создаем или обновляем элемент для времени работы
+    if (!workingHoursEl) {
+      workingHoursEl = document.createElement("p");
+      workingHoursEl.id = "modalWorkingHours";
+      workingHoursEl.className = "text-muted mb-3";
+      // Вставляем после metaEl
+      if (metaEl.nextSibling) {
+        metaEl.parentNode.insertBefore(workingHoursEl, metaEl.nextSibling);
+      } else {
+        metaEl.parentNode.appendChild(workingHoursEl);
+      }
+    }
+    workingHoursEl.innerHTML = `<strong>Режим работы:</strong> ${workingHoursFormatted}`;
+    workingHoursEl.classList.remove("d-none");
+  } else {
+    // Скрываем элемент, если времени работы нет
+    if (workingHoursEl) {
+      workingHoursEl.classList.add("d-none");
+    }
+  }
 
   if (details.photo_url) {
     photoEl.src = details.photo_url;
