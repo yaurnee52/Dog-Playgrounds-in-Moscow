@@ -1,11 +1,11 @@
 const userInfo = document.getElementById("userInfo");
 const dogsList = document.getElementById("dogsList");
 const showAddDogBtn = document.getElementById("showAddDogBtn");
-const addDogCard = document.getElementById("addDogCard");
 const addDogForm = document.getElementById("addDogForm");
 const addDogStatus = document.getElementById("addDogStatus");
-const cancelAddDog = document.getElementById("cancelAddDog");
+const submitAddDogBtn = document.getElementById("submitAddDogBtn");
 const logoutBtn = document.getElementById("logoutBtn");
+const addDogModal = new bootstrap.Modal(document.getElementById("addDogModal"));
 
 function showStatus(message, isSuccess) {
   addDogStatus.textContent = message;
@@ -50,17 +50,12 @@ async function loadDogs() {
 }
 
 showAddDogBtn.addEventListener("click", () => {
-  addDogCard.classList.remove("d-none");
-});
-
-cancelAddDog.addEventListener("click", () => {
-  addDogCard.classList.add("d-none");
   addDogStatus.classList.add("d-none");
   addDogForm.reset();
+  addDogModal.show();
 });
 
-addDogForm.addEventListener("submit", async (event) => {
-  event.preventDefault();
+submitAddDogBtn.addEventListener("click", async () => {
   const formData = new FormData(addDogForm);
   const payload = Object.fromEntries(formData.entries());
   try {
@@ -68,6 +63,9 @@ addDogForm.addEventListener("submit", async (event) => {
     showStatus("Питомец добавлен.", true);
     addDogForm.reset();
     await loadDogs();
+    setTimeout(() => {
+      addDogModal.hide();
+    }, 1000);
   } catch (error) {
     const message = error.response?.data?.error || "Не удалось добавить питомца.";
     showStatus(message, false);

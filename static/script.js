@@ -46,15 +46,15 @@ let currentMarkers = [];
 
 async function loadPlaygrounds() {
   if (!map) {
-    return; // Карта еще не инициализирована
+    return; 
   }
   
-  // Удаляем старые маркеры
+
   currentMarkers.forEach(marker => {
     try {
       map.removeLayer(marker);
     } catch (e) {
-      // Игнорируем ошибки при удалении
+
     }
   });
   currentMarkers = [];
@@ -122,7 +122,6 @@ async function loadDistricts() {
       select.appendChild(option);
     });
     
-    // Initialize Tom Select
     const ts = new TomSelect(select, {
         create: false,
         sortField: {
@@ -139,7 +138,6 @@ async function loadDistricts() {
       ts.setValue(currentDistrict);
     }
     
-    // Привязываем обработчики фильтров после загрузки районов
     bindDistrictFilter();
   } catch (error) {
     console.error("Ошибка загрузки районов", error);
@@ -159,7 +157,7 @@ function bindDistrictFilter() {
     }
   });
   
-  // Обработчики фильтров - добавляем после загрузки DOM
+
   const lightingCheckbox = document.getElementById("mapFilterLighting");
   const fencingCheckbox = document.getElementById("mapFilterFencing");
   const elementsCheckbox = document.getElementById("mapFilterElements");
@@ -232,23 +230,18 @@ async function loadDetails() {
   renderModal(response.data);
 }
 
-// Функция для форматирования времени работы
 function formatWorkingHours(workingHours) {
   if (!workingHours) return null;
   
-  // Парсим данные: извлекаем все значения Hours
   const hours = workingHours.match(/Hours:([^\n]+)/g);
   if (!hours || hours.length === 0) return null;
   
-  // Убираем префикс "Hours:" и получаем уникальные значения
   const uniqueHours = [...new Set(hours.map(h => h.replace('Hours:', '').trim()))];
   
-  // Если все дни одинаковые
   if (uniqueHours.length === 1) {
     return uniqueHours[0] === 'круглосуточно' ? 'Круглосуточно' : `Пн-Вс: ${uniqueHours[0]}`;
   }
   
-  // Если разные - показываем просто первое время (или можно все через запятую)
   return uniqueHours.join(', ');
 }
 
@@ -262,18 +255,16 @@ function renderModal(details) {
   if (details.district) metaParts.push(details.district);
   if (details.adm_area) metaParts.push(details.adm_area);
   metaEl.textContent = metaParts.join(" • ");
-  
-  // Отображаем время работы отдельно, если есть
-  const workingHoursFormatted = formatWorkingHours(details.working_hours);
+    const workingHoursFormatted = formatWorkingHours(details.working_hours);
   let workingHoursEl = document.getElementById("modalWorkingHours");
   
   if (workingHoursFormatted) {
-    // Создаем или обновляем элемент для времени работы
+
     if (!workingHoursEl) {
       workingHoursEl = document.createElement("p");
       workingHoursEl.id = "modalWorkingHours";
       workingHoursEl.className = "text-muted mb-3";
-      // Вставляем после metaEl
+
       if (metaEl.nextSibling) {
         metaEl.parentNode.insertBefore(workingHoursEl, metaEl.nextSibling);
       } else {
@@ -283,7 +274,7 @@ function renderModal(details) {
     workingHoursEl.innerHTML = `<strong>Режим работы:</strong> ${workingHoursFormatted}`;
     workingHoursEl.classList.remove("d-none");
   } else {
-    // Скрываем элемент, если времени работы нет
+
     if (workingHoursEl) {
       workingHoursEl.classList.add("d-none");
     }
@@ -304,8 +295,6 @@ function renderModal(details) {
     button.className = `btn btn-sm slot-btn ${statusToClass(slot.status, isSelected)}`;
     button.textContent = `${slot.label} (${slot.count}/${slot.limit})`;
     
-    // Disable if full. If no dog selected, disable all (or allow view but not select).
-    // If user not authorized (no dogs), disable.
     const canBook = dogsCache.length > 0 && dogSelect.value;
     button.disabled = slot.status === "full" || !canBook;
 
@@ -319,7 +308,7 @@ function renderModal(details) {
 function selectSlot(hour) {
   selectedSlotHour = hour;
   bookSlotBtn.disabled = false;
-  loadDetails(); // Re-render to update selection styling
+  loadDetails(); 
 }
 
 function statusToClass(status, isSelected) {
@@ -409,7 +398,6 @@ async function loadDogs() {
     dogSelect.appendChild(option);
   });
   
-  // Select first by default if exists
   if (dogsCache.length > 0) {
       dogSelect.value = dogsCache[0].id;
   }
@@ -420,8 +408,7 @@ if (bookSlotBtn) {
 }
 
 dogSelect.addEventListener("change", () => {
-  // Reset selection when dog changes? Or keep it?
-  // Maybe keep it, but refresh details to see if available for new dog
+
   selectedSlotHour = null;
   bookSlotBtn.disabled = true;
   loadDetails();
@@ -544,8 +531,8 @@ async function checkUrlParams() {
   }
 }
 
-// Инициализация в правильном порядке
+
 initMap();
-loadDistricts(); // bindDistrictFilter вызывается внутри loadDistricts после инициализации Tom Select
+loadDistricts(); 
 checkAuth();
 checkUrlParams();

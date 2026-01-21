@@ -43,7 +43,7 @@ async function loadDistricts() {
     districtSelect.appendChild(option);
   });
   
-  // Initialize Tom Select
+  //Tom Select
   if (tomSelectInstance) {
     tomSelectInstance.destroy();
   }
@@ -246,11 +246,9 @@ async function checkAuth() {
   }
 }
 
-// Tom Select handles change events internally via configuration
-// districtSelect.addEventListener("change", updateMapLink);
+
 searchBtn.addEventListener("click", searchPlaygrounds);
 
-// Обработчики фильтров - добавляем после загрузки DOM
 function setupFilters() {
   const lightingCheckbox = document.getElementById("filterLighting");
   const fencingCheckbox = document.getElementById("filterFencing");

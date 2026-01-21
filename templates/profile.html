@@ -50,42 +50,47 @@
             </div>
           </div>
 
-          <div class="card shadow-sm d-none" id="addDogCard">
-            <div class="card-body">
-              <h5 class="card-title">Добавить питомца</h5>
-              <div id="addDogStatus" class="alert d-none" role="alert"></div>
-              <form id="addDogForm" class="row g-3">
-                <div class="col-md-6">
-                  <label class="form-label">Кличка</label>
-                  <input class="form-control" name="dog_name" required />
-                </div>
-                <div class="col-md-6">
-                  <label class="form-label">Порода (необязательно)</label>
-                  <input class="form-control" name="dog_breed" />
-                </div>
-                <div class="col-md-6">
-                  <label class="form-label">Категория</label>
-                  <select class="form-select" name="dog_category" required>
-                    <option value="SMALL">Декоративные (SMALL)</option>
-                    <option value="STANDARD" selected>Стандартные (STANDARD)</option>
-                    <option value="ACTIVE">Активные (ACTIVE)</option>
-                    <option value="HIGH_RISK">Служебные / Бойцовские (HIGH_RISK)</option>
-                  </select>
-                </div>
-                <div class="col-12">
-                  <button class="btn btn-primary" type="submit">
-                    Сохранить
-                  </button>
-                  <button class="btn btn-link" type="button" id="cancelAddDog">
-                    Отмена
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
+
         </div>
       </div>
     </main>
+
+    <div class="modal fade" id="addDogModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Добавить питомца</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div id="addDogStatus" class="alert d-none" role="alert"></div>
+            <form id="addDogForm" class="row g-3">
+              <div class="col-12">
+                <label class="form-label">Кличка</label>
+                <input class="form-control" name="dog_name" required />
+              </div>
+              <div class="col-12">
+                <label class="form-label">Порода (необязательно)</label>
+                <input class="form-control" name="dog_breed" />
+              </div>
+              <div class="col-12">
+                <label class="form-label">Категория</label>
+                <select class="form-select" name="dog_category" required>
+                  <option value="SMALL">Декоративные (SMALL)</option>
+                  <option value="STANDARD" selected>Стандартные (STANDARD)</option>
+                  <option value="ACTIVE">Активные (ACTIVE)</option>
+                  <option value="HIGH_RISK">Служебные / Бойцовские (HIGH_RISK)</option>
+                </select>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+            <button type="button" class="btn btn-primary" id="submitAddDogBtn">Добавить</button>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <footer class="bg-white sticky-footer">
       <div class="container text-muted small d-flex flex-wrap justify-content-between gap-2 py-2">

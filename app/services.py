@@ -11,7 +11,6 @@ def clean_park_name(raw_name):
     if not raw_name or raw_name == "[]":
         return None
     
-    # Try to find value=... pattern
     match = re.search(r"value=([^}]+)", raw_name)
     if match:
         return match.group(1).strip()
